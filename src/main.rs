@@ -1,7 +1,7 @@
-use std::path::{Path, PathBuf};
-use std::process::{exit, Command, Stdio};
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
+use std::path::{Path, PathBuf};
+use std::process::{exit, Command, Stdio};
 use structopt::StructOpt;
 use toml::Value;
 
@@ -150,7 +150,6 @@ fn main() {
             error!("No remote build server was defined (use config file or --remote flag)");
             exit(-3);
         });
-
     // generate a unique build path by using the hashed project dir as folder on the remote machine
     let mut hasher = DefaultHasher::new();
     project_dir.hash(&mut hasher);
@@ -162,7 +161,7 @@ fn main() {
     rsync_to
         .arg("-a".to_owned())
         .arg("--delete")
-        .arg("--compress")
+        .arg("-zz")
         .arg("--info=progress2")
         .arg("--exclude")
         .arg("target");
@@ -217,10 +216,17 @@ fn main() {
         Command::new("rsync")
             .arg("-a")
             .arg("--delete")
-            .arg("--compress")
+            .arg("-zz")
             .arg("--info=progress2")
-            .arg(format!("{}:{}/target/{}", build_server, build_path, file_name))
-            .arg(format!("{}/target/{}", project_dir.to_string_lossy(), file_name))
+            .arg(format!(
+                "{}:{}/target/{}",
+                build_server, build_path, file_name
+            ))
+            .arg(format!(
+                "{}/target/{}",
+                project_dir.to_string_lossy(),
+                file_name
+            ))
             .stdout(Stdio::inherit())
             .stderr(Stdio::inherit())
             .stdin(Stdio::inherit())
@@ -239,7 +245,7 @@ fn main() {
         Command::new("rsync")
             .arg("-a")
             .arg("--delete")
-            .arg("--compress")
+            .arg("-zz")
             .arg("--info=progress2")
             .arg(format!("{}:{}/Cargo.lock", build_server, build_path))
             .arg(format!("{}/Cargo.lock", project_dir.to_string_lossy()))
